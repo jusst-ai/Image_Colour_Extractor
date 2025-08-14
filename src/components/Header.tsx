@@ -17,7 +17,7 @@ const Header = () => {
         </h2>
       </div>
       <Button variant="default" className="transition-smooth hover:shadow-soft">
-        Get Started
+        Login
       </Button>
     </header>
   );

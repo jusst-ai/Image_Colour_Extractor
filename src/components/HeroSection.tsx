@@ -20,21 +20,6 @@ const HeroSection = () => {
               Extract, analyze, and export beautiful color palettes instantly.
             </h2>
           </div>
-          <div className="flex flex-col @[480px]:flex-row gap-4">
-            <Button 
-              size="lg" 
-              className="gradient-primary text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-medium transition-bounce hover:scale-105"
-            >
-              Upload Image
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="bg-white/10 border-white/30 text-white font-semibold px-8 py-6 text-lg rounded-xl backdrop-blur-sm hover:bg-white/20 transition-smooth"
-            >
-              Try Demo
-            </Button>
-          </div>
         </div>
       </div>
     </div>
