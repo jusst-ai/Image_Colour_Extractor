@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 
-const Header = () => {
+interface HeaderProps {
+  isLoggedIn: boolean;
+  onLogin: () => void;
+  onLogout: () => void;
+}
+
+const Header = ({ isLoggedIn, onLogin, onLogout }: HeaderProps) => {
   return (
     <header className="flex items-center justify-between whitespace-nowrap border-b border-border px-10 py-4 bg-card">
       <div className="flex items-center gap-4 text-foreground">
@@ -16,8 +22,12 @@ const Header = () => {
           Color Palette Extractor
         </h2>
       </div>
-      <Button variant="default" className="transition-smooth hover:shadow-soft">
-        Login
+      <Button 
+        variant="default" 
+        className="transition-smooth hover:shadow-soft"
+        onClick={isLoggedIn ? onLogout : onLogin}
+      >
+        {isLoggedIn ? "Logout" : "Login"}
       </Button>
     </header>
   );
