@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -7,6 +8,16 @@ interface HeaderProps {
 }
 
 const Header = ({ isLoggedIn, onLogin, onLogout }: HeaderProps) => {
+  const navigate = useNavigate();
+
+  const handleAuthClick = () => {
+    if (isLoggedIn) {
+      onLogout();
+    } else {
+      navigate("/auth");
+    }
+  };
+
   return (
     <header className="flex items-center justify-between whitespace-nowrap border-b border-border px-10 py-4 bg-card">
       <div className="flex items-center gap-4 text-foreground">
@@ -25,7 +36,7 @@ const Header = ({ isLoggedIn, onLogin, onLogout }: HeaderProps) => {
       <Button 
         variant="default" 
         className="transition-smooth hover:shadow-soft"
-        onClick={isLoggedIn ? onLogout : onLogin}
+        onClick={handleAuthClick}
       >
         {isLoggedIn ? "Logout" : "Login"}
       </Button>
