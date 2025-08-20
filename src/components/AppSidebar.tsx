@@ -1,4 +1,5 @@
 import { Home, Compass, User } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -11,12 +12,19 @@ import {
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
-  { title: "Home", icon: Home, isActive: true },
-  { title: "Explore", icon: Compass, isActive: false },
-  { title: "Profile", icon: User, isActive: false },
+  { title: "Home", icon: Home, path: "/" },
+  { title: "Explore", icon: Compass, path: "/explore" },
+  { title: "Profile", icon: User, path: "/profile" },
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <Sidebar className="w-80 border-r border-border">
       <SidebarContent className="bg-white">
@@ -29,9 +37,12 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <div className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer ${
-                      item.isActive ? "bg-muted" : "hover:bg-muted/50"
-                    }`}>
+                    <div 
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer ${
+                        location.pathname === item.path ? "bg-muted" : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => handleNavigation(item.path)}
+                    >
                       <item.icon className="h-6 w-6 text-foreground" />
                       <span className="text-foreground text-sm font-medium leading-normal">
                         {item.title}
