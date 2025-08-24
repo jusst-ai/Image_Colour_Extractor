@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExtractedColor {
   hex: string;
@@ -14,7 +16,9 @@ const UploadSection = () => {
   const [extractedColors, setExtractedColors] = useState<ExtractedColor[]>([]);
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const extractColorsFromImage = (imageElement: HTMLImageElement): ExtractedColor[] => {
     const canvas = document.createElement('canvas');
@@ -106,10 +110,72 @@ const UploadSection = () => {
     fileInputRef.current?.click();
   };
 
+  const handleSavePalette = async () => {
+    if (!title.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your palette",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (extractedColors.length === 0) {
+      toast({
+        title: "No colors found",
+        description: "Please upload an image first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to save palettes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('palettes')
+        .insert({
+          user_id: user.id,
+          title: title.trim(),
+          colors: extractedColors as any,
+          is_public: isPublic,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Palette saved!",
+        description: "Your color palette has been saved successfully",
+      });
+
+      // Reset form
+      handleReset();
+    } catch (error) {
+      console.error('Error saving palette:', error);
+      toast({
+        title: "Error saving palette",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleReset = () => {
     setSelectedImage(null);
     setExtractedColors([]);
     setTitle("");
+    setIsPublic(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -183,8 +249,13 @@ const UploadSection = () => {
 
           <div className="flex gap-2 items-center justify-between">
             <div className="flex gap-2">
-              <Button variant="default" className="px-4">
-                Save Palette
+              <Button 
+                variant="default" 
+                className="px-4" 
+                onClick={handleSavePalette}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Palette"}
               </Button>
               <Button variant="outline" className="px-4" onClick={handleReset}>
                 Upload Another
