@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -39,11 +39,17 @@ const Index = () => {
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-background">
           <AppSidebar />
-          <main className="flex-1 flex">
-            <div className="gap-1 px-6 flex flex-1 justify-center py-5">
-              <Dashboard />
-            </div>
-          </main>
+          <div className="flex flex-1 flex-col">
+            <header className="h-16 flex items-center border-b border-border px-6">
+              <SidebarTrigger className="mr-4" />
+              <h1 className="text-xl font-semibold">Color Palette App</h1>
+            </header>
+            <main className="flex-1">
+              <div className="gap-1 px-6 flex flex-1 justify-center py-5">
+                <Dashboard />
+              </div>
+            </main>
+          </div>
         </div>
       </SidebarProvider>
     );

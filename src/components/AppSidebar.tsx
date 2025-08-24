@@ -1,5 +1,5 @@
-import { Home, Compass, User } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Home, User } from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -9,45 +9,47 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
   { title: "Home", icon: Home, path: "/" },
-  { title: "Explore", icon: Compass, path: "/explore" },
   { title: "Profile", icon: User, path: "/profile" },
 ];
 
 export function AppSidebar() {
-  const navigate = useNavigate();
+  const { state } = useSidebar();
   const location = useLocation();
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
+  
+  const isCollapsed = state === "collapsed";
+  const getNavClassName = ({ isActive }: { isActive: boolean }) =>
+    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
 
   return (
-    <Sidebar className="w-80 border-r border-border">
-      <SidebarContent className="bg-white">
+    <Sidebar 
+      className={isCollapsed ? "w-14" : "w-64"}
+      collapsible="icon"
+    >
+      <SidebarTrigger className="m-2 self-end" />
+      
+      <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-foreground text-base font-medium leading-normal px-4 py-4">
-            Color Palette
+          <SidebarGroupLabel className="px-4 py-4">
+            {!isCollapsed && "Color Palette"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2 px-4">
+            <SidebarMenu className="gap-2 px-2">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <div 
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer ${
-                        location.pathname === item.path ? "bg-muted" : "hover:bg-muted/50"
-                      }`}
-                      onClick={() => handleNavigation(item.path)}
+                    <NavLink 
+                      to={item.path} 
+                      className={getNavClassName}
                     >
-                      <item.icon className="h-6 w-6 text-foreground" />
-                      <span className="text-foreground text-sm font-medium leading-normal">
-                        {item.title}
-                      </span>
-                    </div>
+                      <item.icon className="h-5 w-5" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
