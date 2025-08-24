@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface ExtractedColor {
   hex: string;
@@ -12,6 +13,7 @@ const UploadSection = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<ExtractedColor[]>([]);
   const [title, setTitle] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const extractColorsFromImage = (imageElement: HTMLImageElement): ExtractedColor[] => {
@@ -67,10 +69,10 @@ const UploadSection = () => {
       }
     });
 
-    // Sort by frequency and take top 4
+    // Sort by frequency and take top 5
     colorGroups.sort((a, b) => b.count - a.count);
     
-    return colorGroups.slice(0, 4).map(group => ({
+    return colorGroups.slice(0, 5).map(group => ({
       rgb: { 
         r: Math.round(group.r), 
         g: Math.round(group.g), 
@@ -179,13 +181,23 @@ const UploadSection = () => {
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button variant="default" className="px-4">
-              Save Palette
-            </Button>
-            <Button variant="outline" className="px-4" onClick={handleReset}>
-              Upload Another
-            </Button>
+          <div className="flex gap-2 items-center justify-between">
+            <div className="flex gap-2">
+              <Button variant="default" className="px-4">
+                Save Palette
+              </Button>
+              <Button variant="outline" className="px-4" onClick={handleReset}>
+                Upload Another
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="public-toggle" className="text-sm">Public</Label>
+              <Switch 
+                id="public-toggle"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+              />
+            </div>
           </div>
         </div>
       )}
