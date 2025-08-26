@@ -1,4 +1,4 @@
-import { Home, User } from "lucide-react";
+import { Home, User, Compass } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
 
 const navigationItems = [
   { title: "Home", icon: Home, path: "/" },
+  { title: "Explore", icon: Compass, path: "/explore" },
   { title: "Profile", icon: User, path: "/profile" },
 ];
 
