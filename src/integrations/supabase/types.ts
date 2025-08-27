@@ -19,6 +19,7 @@ export type Database = {
           colors: Json
           created_at: string
           id: string
+          image_url: string | null
           is_public: boolean
           title: string
           updated_at: string
@@ -28,6 +29,7 @@ export type Database = {
           colors: Json
           created_at?: string
           id?: string
+          image_url?: string | null
           is_public?: boolean
           title: string
           updated_at?: string
@@ -37,6 +39,7 @@ export type Database = {
           colors?: Json
           created_at?: string
           id?: string
+          image_url?: string | null
           is_public?: boolean
           title?: string
           updated_at?: string

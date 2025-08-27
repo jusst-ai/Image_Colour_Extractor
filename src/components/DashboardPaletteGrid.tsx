@@ -19,6 +19,7 @@ interface Palette {
   created_at: string;
   updated_at: string;
   user_id: string;
+  image_url?: string;
 }
 
 interface PaletteWithUsername extends Palette {
@@ -163,16 +164,36 @@ const DashboardPaletteGrid = () => {
               onClick={() => handlePaletteClick(palette)}
             >
               <div className="w-full aspect-square rounded-lg border border-border overflow-hidden bg-muted">
-                <div className="h-full flex">
-                  {palette.colors.map((color, index) => (
-                    <div
-                      key={index}
-                      className="flex-1 h-full"
-                      style={{ backgroundColor: color.hex }}
-                      title={color.hex}
+                {palette.image_url ? (
+                  <div className="h-full relative">
+                    <img 
+                      src={palette.image_url} 
+                      alt={palette.title}
+                      className="w-full h-full object-cover"
                     />
-                  ))}
-                </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-12 flex">
+                      {palette.colors.map((color, index) => (
+                        <div
+                          key={index}
+                          className="flex-1 h-full"
+                          style={{ backgroundColor: color.hex }}
+                          title={color.hex}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex">
+                    {palette.colors.map((color, index) => (
+                      <div
+                        key={index}
+                        className="flex-1 h-full"
+                        style={{ backgroundColor: color.hex }}
+                        title={color.hex}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -209,6 +230,17 @@ const DashboardPaletteGrid = () => {
           
           {selectedPalette && (
             <div className="space-y-6">
+              {/* Image Display */}
+              {selectedPalette.image_url && (
+                <div className="w-full max-h-64 rounded-lg border border-border overflow-hidden">
+                  <img 
+                    src={selectedPalette.image_url} 
+                    alt={selectedPalette.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
               {/* Color Palette Display */}
               <div className="w-full h-32 rounded-lg border border-border overflow-hidden">
                 <div className="h-full flex">

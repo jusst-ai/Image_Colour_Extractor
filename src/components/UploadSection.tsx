@@ -17,6 +17,8 @@ const UploadSection = () => {
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingWithImage, setIsSavingWithImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -90,6 +92,8 @@ const UploadSection = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setSelectedFile(file);
+    
     const reader = new FileReader();
     reader.onload = (e) => {
       const imageUrl = e.target?.result as string;
@@ -108,6 +112,93 @@ const UploadSection = () => {
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleSavePaletteWithImage = async () => {
+    if (!title.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your palette",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (extractedColors.length === 0) {
+      toast({
+        title: "No colors found",
+        description: "Please upload an image first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedFile) {
+      toast({
+        title: "No image selected",
+        description: "Please select an image to save",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingWithImage(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to save palettes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Upload image to storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('palette-images')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL for the image
+      const { data: { publicUrl } } = supabase.storage
+        .from('palette-images')
+        .getPublicUrl(fileName);
+
+      // Save palette with image URL
+      const { error } = await supabase
+        .from('palettes')
+        .insert({
+          user_id: user.id,
+          title: title.trim(),
+          colors: extractedColors as any,
+          is_public: isPublic,
+          image_url: publicUrl,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Palette with image saved!",
+        description: "Your color palette and image have been saved successfully",
+      });
+
+      // Reset form
+      handleReset();
+    } catch (error) {
+      console.error('Error saving palette with image:', error);
+      toast({
+        title: "Error saving palette",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingWithImage(false);
+    }
   };
 
   const handleSavePalette = async () => {
@@ -173,6 +264,7 @@ const UploadSection = () => {
 
   const handleReset = () => {
     setSelectedImage(null);
+    setSelectedFile(null);
     setExtractedColors([]);
     setTitle("");
     setIsPublic(false);
@@ -253,9 +345,17 @@ const UploadSection = () => {
                 variant="default" 
                 className="px-4" 
                 onClick={handleSavePalette}
-                disabled={isSaving}
+                disabled={isSaving || isSavingWithImage}
               >
                 {isSaving ? "Saving..." : "Save Palette"}
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="px-4" 
+                onClick={handleSavePaletteWithImage}
+                disabled={isSaving || isSavingWithImage}
+              >
+                {isSavingWithImage ? "Saving..." : "Save Palette + Image"}
               </Button>
               <Button variant="outline" className="px-4" onClick={handleReset}>
                 Upload Another
