@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Copy, Search, Trash2 } from "lucide-react";
 
 interface ExtractedColor {
   hex: string;
@@ -30,10 +35,18 @@ const ExploreGrid = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPalette, setSelectedPalette] = useState<PaletteWithUsername | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPublicPalettes();
+    getCurrentUser();
   }, []);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUserId(user?.id || null);
+  };
 
   const fetchPublicPalettes = async () => {
     try {
@@ -44,7 +57,7 @@ const ExploreGrid = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPalettes((data || []) as unknown as Palette[]);
+      setPalettes((data as unknown) as Palette[] || []);
     } catch (error) {
       console.error('Error fetching public palettes:', error);
     } finally {
@@ -76,6 +89,47 @@ const ExploreGrid = () => {
     }
   };
 
+  const handleDeletePalette = async (paletteId: string) => {
+    if (!selectedPalette) return;
+    
+    setDeleting(true);
+    try {
+      // Delete image from storage if it exists
+      if (selectedPalette.image_url) {
+        const imagePath = selectedPalette.image_url.split('/').pop();
+        if (imagePath) {
+          const { error: storageError } = await supabase.storage
+            .from('palette-images')
+            .remove([imagePath]);
+          
+          if (storageError) {
+            console.error('Error deleting image:', storageError);
+          }
+        }
+      }
+
+      // Delete palette from database
+      const { error } = await supabase
+        .from('palettes')
+        .delete()
+        .eq('id', paletteId);
+
+      if (error) throw error;
+
+      // Update local state
+      setPalettes(prev => prev.filter(palette => palette.id !== paletteId));
+      setIsModalOpen(false);
+      setSelectedPalette(null);
+      
+      toast.success('Palette deleted successfully');
+    } catch (error) {
+      console.error('Error deleting palette:', error);
+      toast.error('Failed to delete palette');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const filteredPalettes = palettes.filter(palette =>
     palette.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -103,7 +157,7 @@ const ExploreGrid = () => {
             <Search className="h-6 w-6 text-muted-foreground" />
           </div>
           <input
-            placeholder="Search public palettes"
+            placeholder="Search palettes..."
             className="w-full h-12 pl-12 pr-4 rounded-lg bg-muted border-none focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground text-base font-normal leading-normal"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -160,12 +214,9 @@ const ExploreGrid = () => {
                 )}
               </div>
               <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-foreground text-base font-medium leading-normal truncate">
-                    {palette.title}
-                  </p>
-                  <span className="text-xs bg-muted px-2 py-1 rounded">Public</span>
-                </div>
+                <p className="text-foreground text-base font-medium leading-normal truncate">
+                  {palette.title}
+                </p>
                 <div className="flex gap-1 flex-wrap">
                   {palette.colors.map((color, index) => (
                     <span key={index} className="text-xs text-muted-foreground font-mono">
@@ -228,6 +279,16 @@ const ExploreGrid = () => {
                         style={{ backgroundColor: color.hex }}
                       />
                       <span className="text-sm font-mono text-foreground">{color.hex}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(color.hex);
+                          toast.success(`Copied ${color.hex} to clipboard`);
+                        }}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -237,7 +298,7 @@ const ExploreGrid = () => {
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium text-foreground">Created by</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedPalette.username}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedPalette.username || 'Unknown User'}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -254,6 +315,38 @@ const ExploreGrid = () => {
                     </p>
                   </div>
                 </div>
+
+                {currentUserId === selectedPalette.user_id && (
+                  <div className="pt-4 border-t">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Palette
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Palette?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this palette
+                            {selectedPalette.image_url ? ' and its associated image' : ''}.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeletePalette(selectedPalette.id)}
+                            disabled={deleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {deleting ? 'Deleting...' : 'Delete'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </div>
             </div>
           )}
