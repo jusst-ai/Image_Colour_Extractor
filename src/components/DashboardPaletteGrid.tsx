@@ -115,8 +115,17 @@ const DashboardPaletteGrid = () => {
     
     setDeleting(true);
     try {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('You must be logged in to delete palettes');
+      }
+
+      console.log('Attempting to delete palette:', paletteId, 'by user:', user.id);
+
       // Delete image from storage if it exists
       if (selectedPalette.image_url) {
+        console.log('Deleting image from storage:', selectedPalette.image_url);
         const imagePath = selectedPalette.image_url.split('/').pop();
         if (imagePath) {
           const { error: storageError } = await supabase.storage
@@ -125,17 +134,31 @@ const DashboardPaletteGrid = () => {
           
           if (storageError) {
             console.error('Error deleting image:', storageError);
+            // Don't fail the entire operation if image deletion fails
+          } else {
+            console.log('Image deleted successfully');
           }
         }
       }
 
       // Delete palette from database
-      const { error } = await supabase
+      console.log('Deleting palette from database...');
+      const { data, error } = await supabase
         .from('palettes')
         .delete()
-        .eq('id', paletteId);
+        .eq('id', paletteId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database deletion error:', error);
+        throw error;
+      }
+
+      console.log('Delete result:', data);
+
+      if (!data || data.length === 0) {
+        throw new Error('Palette not found or you do not have permission to delete it');
+      }
 
       // Update local state
       setPalettes(prev => prev.filter(palette => palette.id !== paletteId));
@@ -143,9 +166,11 @@ const DashboardPaletteGrid = () => {
       setSelectedPalette(null);
       
       toast.success('Palette deleted successfully');
+      console.log('Palette deletion completed successfully');
     } catch (error) {
       console.error('Error deleting palette:', error);
-      toast.error('Failed to delete palette');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete palette';
+      toast.error(errorMessage);
     } finally {
       setDeleting(false);
     }
