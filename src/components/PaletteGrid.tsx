@@ -23,11 +23,11 @@ const PaletteCard = ({ palette }: { palette: typeof paletteData[0] }) => {
   return (
     <div className="group cursor-pointer transition-smooth hover:scale-105">
       <div className="flex flex-col gap-3">
-        <div className="relative overflow-hidden rounded-xl shadow-soft hover:shadow-medium transition-smooth">
+        <div className="relative overflow-hidden rounded-xl shadow-soft hover:shadow-medium transition-smooth bg-muted">
           <img
             src={palette.image}
             alt={palette.title}
-            className="w-full aspect-square object-cover transition-smooth group-hover:scale-110"
+            className="w-full aspect-square object-contain transition-smooth group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-smooth" />
         </div>

@@ -202,14 +202,16 @@ const DashboardPaletteGrid = () => {
               className="flex flex-col gap-3 pb-3 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => handlePaletteClick(palette)}
             >
-              <div className="w-full aspect-square rounded-lg border border-border overflow-hidden bg-muted">
+              <div className="w-full rounded-lg border border-border overflow-hidden bg-muted">
                 {palette.image_url ? (
-                  <div className="h-full relative">
-                    <img 
-                      src={palette.image_url} 
-                      alt={palette.title}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative">
+                    <div className="w-full aspect-square overflow-hidden">
+                      <img 
+                        src={palette.image_url} 
+                        alt={palette.title}
+                        className="w-full h-full object-contain bg-muted"
+                      />
+                    </div>
                     <div className="absolute bottom-0 left-0 right-0 h-12 flex">
                       {palette.colors.map((color, index) => (
                         <div
@@ -222,7 +224,7 @@ const DashboardPaletteGrid = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex">
+                  <div className="aspect-square flex">
                     {palette.colors.map((color, index) => (
                       <div
                         key={index}
@@ -271,11 +273,11 @@ const DashboardPaletteGrid = () => {
             <div className="space-y-6">
               {/* Image Display */}
               {selectedPalette.image_url && (
-                <div className="w-full max-h-64 rounded-lg border border-border overflow-hidden">
+                <div className="w-full rounded-lg border border-border overflow-hidden bg-muted">
                   <img 
                     src={selectedPalette.image_url} 
                     alt={selectedPalette.title}
-                    className="w-full h-full object-cover"
+                    className="w-full max-h-96 object-contain"
                   />
                 </div>
               )}
