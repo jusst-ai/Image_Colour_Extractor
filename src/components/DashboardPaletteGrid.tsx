@@ -24,6 +24,7 @@ interface Palette {
   updated_at: string;
   user_id: string;
   image_url?: string;
+  signed_image_url?: string; // For displaying private images
 }
 
 interface PaletteWithUsername extends Palette {
@@ -54,7 +55,30 @@ const DashboardPaletteGrid = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPalettes((data as unknown) as Palette[] || []);
+      
+      // Generate signed URLs for images from private bucket
+      const palettesWithSignedUrls = await Promise.all(
+        (data || []).map(async (palette) => {
+          if (palette.image_url) {
+            try {
+              const { data: signedUrlData } = await supabase.storage
+                .from('palette-images')
+                .createSignedUrl(palette.image_url, 60 * 60); // 1 hour expiry
+              
+              return {
+                ...palette,
+                signed_image_url: signedUrlData?.signedUrl
+              };
+            } catch (error) {
+              console.error('Error generating signed URL:', error);
+              return palette;
+            }
+          }
+          return palette;
+        })
+      );
+      
+      setPalettes(palettesWithSignedUrls as unknown as Palette[]);
     } catch (error) {
       console.error('Error fetching palettes:', error);
     } finally {
@@ -126,18 +150,16 @@ const DashboardPaletteGrid = () => {
       // Delete image from storage if it exists
       if (selectedPalette.image_url) {
         console.log('Deleting image from storage:', selectedPalette.image_url);
-        const imagePath = selectedPalette.image_url.split('/').pop();
-        if (imagePath) {
-          const { error: storageError } = await supabase.storage
-            .from('palette-images')
-            .remove([imagePath]);
+        // Use the stored file path directly (no need to extract from URL)
+        const { error: storageError } = await supabase.storage
+          .from('palette-images')
+          .remove([selectedPalette.image_url]);
           
-          if (storageError) {
-            console.error('Error deleting image:', storageError);
-            // Don't fail the entire operation if image deletion fails
-          } else {
-            console.log('Image deleted successfully');
-          }
+        if (storageError) {
+          console.error('Error deleting image:', storageError);
+          // Don't fail the entire operation if image deletion fails
+        } else {
+          console.log('Image deleted successfully');
         }
       }
 
@@ -228,11 +250,11 @@ const DashboardPaletteGrid = () => {
               onClick={() => handlePaletteClick(palette)}
             >
               <div className="w-full rounded-lg border border-border overflow-hidden bg-muted">
-                {palette.image_url ? (
+                {palette.signed_image_url ? (
                   <div className="relative">
                     <div className="w-full aspect-square overflow-hidden">
                       <img 
-                        src={palette.image_url} 
+                        src={palette.signed_image_url} 
                         alt={palette.title}
                         className="w-full h-full object-contain bg-muted"
                       />
@@ -297,10 +319,10 @@ const DashboardPaletteGrid = () => {
           {selectedPalette && (
             <div className="space-y-6">
               {/* Image Display */}
-              {selectedPalette.image_url && (
+              {selectedPalette.signed_image_url && (
                 <div className="w-full rounded-lg border border-border overflow-hidden bg-muted">
                   <img 
-                    src={selectedPalette.image_url} 
+                    src={selectedPalette.signed_image_url} 
                     alt={selectedPalette.title}
                     className="w-full max-h-96 object-contain"
                   />

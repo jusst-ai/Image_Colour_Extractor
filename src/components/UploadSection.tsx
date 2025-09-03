@@ -164,12 +164,7 @@ const UploadSection = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL for the image
-      const { data: { publicUrl } } = supabase.storage
-        .from('palette-images')
-        .getPublicUrl(fileName);
-
-      // Save palette with image URL
+      // Save palette with image path (not public URL since bucket is private)
       const { error } = await supabase
         .from('palettes')
         .insert({
@@ -177,7 +172,7 @@ const UploadSection = () => {
           title: title.trim(),
           colors: extractedColors as any,
           is_public: isPublic,
-          image_url: publicUrl,
+          image_url: fileName, // Store the file path instead of public URL
         });
 
       if (error) throw error;
