@@ -80,24 +80,15 @@ const ProfileContent = () => {
     
     setDeleting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
+      const { data, error } = await supabase.functions.invoke('delete-account');
 
-      const response = await fetch('/api/delete-account', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete account');
+      if (error) {
+        throw error;
       }
 
       toast.success('Account deleted successfully');
+      // Sign out the user since account is deleted
+      await supabase.auth.signOut();
       navigate('/');
     } catch (error) {
       console.error('Error deleting account:', error);
