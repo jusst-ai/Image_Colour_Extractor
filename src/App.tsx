@@ -44,6 +44,8 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Reset password should be accessible regardless of auth status */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             {user ? (
               <>
                 <Route path="/" element={<AuthenticatedLayout />} />
@@ -54,7 +56,6 @@ const App = () => {
               <>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<AuthPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
               </>
             )}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
