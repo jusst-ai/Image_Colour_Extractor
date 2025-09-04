@@ -56,7 +56,21 @@ serve(async (req) => {
 
     console.log('Found palettes:', palettes?.length)
 
-    // Delete images from storage if they exist
+    // Delete entire user folder from storage
+    console.log('Deleting user folder from storage')
+    const { data: userFiles } = await supabaseAdmin.storage
+      .from('palette-images')
+      .list(user.id, { limit: 1000 })
+
+    if (userFiles && userFiles.length > 0) {
+      const filePaths = userFiles.map(file => `${user.id}/${file.name}`)
+      console.log('Deleting files:', filePaths)
+      await supabaseAdmin.storage
+        .from('palette-images')
+        .remove(filePaths)
+    }
+
+    // Also delete any individual image files referenced in palettes (fallback)
     if (palettes) {
       for (const palette of palettes) {
         if (palette.image_url) {
@@ -64,8 +78,8 @@ serve(async (req) => {
           const imagePath = palette.image_url.includes('/') 
             ? palette.image_url.split('/').pop()
             : palette.image_url
-          if (imagePath) {
-            console.log('Deleting image:', imagePath)
+          if (imagePath && !imagePath.startsWith(user.id)) {
+            console.log('Deleting individual image:', imagePath)
             await supabaseAdmin.storage
               .from('palette-images')
               .remove([imagePath])
