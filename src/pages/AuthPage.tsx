@@ -22,7 +22,9 @@ const AuthPage = () => {
     const password = formData.get("password") as string;
     
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Attempting signup for:', email);
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -30,13 +32,36 @@ const AuthPage = () => {
         }
       });
       
-      if (error) throw error;
+      console.log('Signup response:', { data, error });
       
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to complete your registration.",
-      });
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes('User already registered')) {
+          toast({
+            title: "Account exists",
+            description: "An account with this email already exists. Try signing in instead or use password reset if you forgot your password.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
+
+      // Check if user was created or already exists
+      if (data.user && !data.session) {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link to complete your registration.",
+        });
+      } else if (data.user && data.session) {
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created and you're now signed in.",
+        });
+        navigate("/");
+      }
     } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
         title: "Error",
         description: error.message,
