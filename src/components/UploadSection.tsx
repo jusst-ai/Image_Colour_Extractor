@@ -38,20 +38,30 @@ const UploadSection = () => {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
 
-    // Sample pixels (every 10th pixel to improve performance)
+    // Sample pixels (every 8th pixel to improve performance)
     const pixels: { r: number; g: number; b: number }[] = [];
-    for (let i = 0; i < data.length; i += 40) { // 40 = 4 * 10 (RGBA * skip factor)
-      pixels.push({
-        r: data[i],
-        g: data[i + 1],
-        b: data[i + 2]
-      });
+    for (let i = 0; i < data.length; i += 32) { // 32 = 4 * 8 (RGBA * skip factor)
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const alpha = data[i + 3];
+      
+      // Skip transparent or nearly transparent pixels
+      if (alpha < 128) continue;
+      
+      pixels.push({ r, g, b });
     }
 
-    // Group similar colors using k-means clustering (simplified)
+    if (pixels.length === 0) return [];
+
+    // Group similar colors using improved clustering
     const colorGroups: { r: number; g: number; b: number; count: number }[] = [];
     
     pixels.forEach(pixel => {
+      // Skip colors that are too close to pure white or black (common but not interesting)
+      const brightness = (pixel.r + pixel.g + pixel.b) / 3;
+      if (brightness > 245 || brightness < 10) return;
+      
       let found = false;
       for (const group of colorGroups) {
         const distance = Math.sqrt(
@@ -60,7 +70,8 @@ const UploadSection = () => {
           Math.pow(pixel.b - group.b, 2)
         );
         
-        if (distance < 50) { // Threshold for similar colors
+        // Increased threshold for better grouping of similar colors
+        if (distance < 80) {
           group.r = (group.r * group.count + pixel.r) / (group.count + 1);
           group.g = (group.g * group.count + pixel.g) / (group.count + 1);
           group.b = (group.b * group.count + pixel.b) / (group.count + 1);
@@ -75,10 +86,15 @@ const UploadSection = () => {
       }
     });
 
-    // Sort by frequency and take top 5
-    colorGroups.sort((a, b) => b.count - a.count);
+    // Filter out colors with very low occurrence and sort by frequency
+    const minOccurrence = Math.max(1, Math.floor(pixels.length * 0.005)); // At least 0.5% of sampled pixels
+    const significantColors = colorGroups.filter(group => group.count >= minOccurrence);
+    significantColors.sort((a, b) => b.count - a.count);
     
-    return colorGroups.slice(0, 5).map(group => ({
+    // Return only the actual number of distinct colors found (up to 5)
+    const finalColors = significantColors.slice(0, 5);
+    
+    return finalColors.map(group => ({
       rgb: { 
         r: Math.round(group.r), 
         g: Math.round(group.g), 
