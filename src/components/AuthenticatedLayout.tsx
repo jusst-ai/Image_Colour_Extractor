@@ -7,10 +7,46 @@ import { toast } from "sonner";
 import Dashboard from "@/components/Dashboard";
 import ExplorePage from "@/pages/ExplorePage";
 import ProfileContent from "@/components/ProfileContent";
+import { useEffect, useState } from "react";
 
 const AuthenticatedLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isCheckingTerms, setIsCheckingTerms] = useState(true);
+
+  useEffect(() => {
+    const checkTermsAcceptance = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/auth");
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("terms_accepted")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error checking terms:", error);
+          return;
+        }
+
+        if (!profile?.terms_accepted) {
+          navigate("/terms");
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking terms acceptance:", error);
+      } finally {
+        setIsCheckingTerms(false);
+      }
+    };
+
+    checkTermsAcceptance();
+  }, [navigate]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -32,6 +68,17 @@ const AuthenticatedLayout = () => {
         return <Dashboard />;
     }
   };
+
+  if (isCheckingTerms) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>

@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import TermsPage from "./pages/TermsPage";
 import AuthenticatedLayout from "./components/AuthenticatedLayout";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,8 @@ const App = () => {
           <Routes>
             {/* Reset password should be accessible regardless of auth status */}
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            {/* Terms page should be accessible for authenticated users */}
+            {user && <Route path="/terms" element={<TermsPage />} />}
             {user ? (
               <>
                 <Route path="/" element={<AuthenticatedLayout />} />

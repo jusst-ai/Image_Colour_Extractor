@@ -13,6 +13,8 @@ interface Profile {
   username: string;
   created_at: string;
   updated_at: string;
+  terms_accepted: boolean;
+  terms_accepted_at: string | null;
 }
 
 const ProfilePage = () => {
