@@ -309,7 +309,7 @@ const DashboardPaletteGrid = () => {
       )}
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               {selectedPalette?.title}
@@ -317,20 +317,20 @@ const DashboardPaletteGrid = () => {
           </DialogHeader>
           
           {selectedPalette && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Image Display */}
               {selectedPalette.signed_image_url && (
                 <div className="w-full rounded-lg border border-border overflow-hidden bg-muted">
                   <img 
                     src={selectedPalette.signed_image_url} 
                     alt={selectedPalette.title}
-                    className="w-full max-h-96 object-contain"
+                    className="w-full max-h-48 object-contain"
                   />
                 </div>
               )}
               
               {/* Color Palette Display */}
-              <div className="w-full h-32 rounded-lg border border-border overflow-hidden">
+              <div className="w-full h-20 rounded-lg border border-border overflow-hidden">
                 <div className="h-full flex">
                   {selectedPalette.colors.map((color, index) => (
                     <div
@@ -346,7 +346,7 @@ const DashboardPaletteGrid = () => {
               {/* Color Values */}
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-foreground">Colors</h3>
-                <div className="flex gap-2 flex-wrap">
+                <div className="grid grid-cols-2 gap-2">
                   {selectedPalette.colors.map((color, index) => (
                     <div key={index} className="flex items-center gap-2 bg-muted px-3 py-2 rounded-md">
                       <div 
@@ -370,7 +370,7 @@ const DashboardPaletteGrid = () => {
               </div>
 
               {/* Palette Info */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
                   <Label className="text-sm font-medium text-foreground">Created by</Label>
                   <p className="text-sm text-muted-foreground mt-1">{selectedPalette.username}</p>
