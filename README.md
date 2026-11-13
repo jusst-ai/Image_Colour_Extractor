@@ -2,7 +2,8 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/630ec14c-0aed-42f2-9daa-8b776fd8bcf7
+**Chat URL**: https://lovable.dev/projects/630ec14c-0aed-42f2-9daa-8b776fd8bcf7
+**Website URL**: https://palettin.lovable.app/
 
 ## How can I edit this code?
 
